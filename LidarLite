@@ -1,0 +1,12 @@
+import RPi.GPIO as gp
+
+gp.setmode(gp.BCM)
+output = 16
+gp.setup(output, gp.OUT)
+
+input = 23
+gp.setup(input,gp.INPUT)
+
+pwm = gp.PWM(motorPWM, 1000)
+
+pwm.start(100)

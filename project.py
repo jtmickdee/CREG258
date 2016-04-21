@@ -40,7 +40,7 @@ def updateCarServo(angle):
 def adjustCarPos(angle):
 	print 'adjusting'
 	updateCarServo(angle)
-	
+
 #uses image processing with angle update
 #takes too long to on  raspberrry pi
 def checkPhoto(xDim, angle):
@@ -69,6 +69,68 @@ def adjustCamera(photoCoord, servoAngle):
 	elif diffCoord < 0:
 		updateCamServo(servoAngle - abs(diffCoord) % servoAdjustFactor)
 
+#max of percentage for the motor max
+PWM_MAX = 100
+
+#motor1 In1 on the h-bridge
+motorIn1 = 16
+gp.setup(motorIn1, gp.OUT)
+gp.output(motorIn1, False)
+
+#motor1 in2 on the h-bridge
+motorIn2 = 21
+gp.setup(motorIn2, gp.OUT)
+gp.output(motorIn2, False)
+
+#motor pwm controls percentage of time on
+motorPWM = 20
+gp.setup(motorPWM, gp.OUT)
+gp.output(motorPWM, True)
+
+pwmCarMotor = gp.PWM(motorPWM, 1000)
+
+pwmCarMotor.start(100)
+
+#sets mode of motor so either forward backward Stopping
+#all chars forward is f, backword is r, stop is s
+def setMode(mode):
+	if mode == 'f':
+		gp.output(motorIn1, True)
+		gp.output(motorIn2, False)
+		print 'Going forwards'
+	elif mode == 'r':
+		gp.output(motorIn1, False)
+		gp.output(motorIn2, True)
+		print 'Going backwards'
+	else:
+		pwmCarMotor.ChangeDutyCycle(0)
+		gp.output(motorIn1, False)
+		gp.output(motorIn2, False)
+		print 'Stopping'
+
+#controls power being applied to motor
+def setPower(power):
+	if power < 0:
+		setMode('r')
+		pwm2 = -int(PWM_MAX * power)
+		if pwm2 > PWM_MAX:
+			pwm2 = PWM_MAX
+	elif power > 0:
+		setMode('f')
+		pwm2 = int(PWM_MAX * power)
+		if pwm2 > PWM_MAX:
+			pwm2 = PWM_MAX
+	else:
+		setMode('s')
+		pwm2 = 0
+		print 'Powering down'
+	pwmCarMotor.ChangeDutyCycle(pwm2)
+
+#stops motor and cleanups connections
+def exit():
+	gp.output(motorIn1, False)
+	gp.output(motorIn2, False)
+	gp.cleanup()
 #while 1:
 #	angle = raw_input('Enter angle')
 #	update(angle)
