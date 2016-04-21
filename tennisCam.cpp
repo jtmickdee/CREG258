@@ -104,6 +104,7 @@ int main(int argc, char **argv)
 //free mem
     blur.release();
 
+/*
                  for( size_t i = 0; i < circles.size(); i++ )
              {
                   Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
@@ -114,6 +115,15 @@ int main(int argc, char **argv)
                   // draw the circle outline
                   circle( img, center, radius, Scalar(0,0,255), 3, 8, 0 );
              }
+*/
+   Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+   int radius = cvRound(circles[i][2]);
+   // draw the circle center
+   circle( img, center, 3, Scalar(0,255,0), -1, 8, 0 );
+   cout<<center<<endl;
+   // draw the circle outline
+   circle( img, center, radius, Scalar(0,0,255), 3, 8, 0 );
+
     // CvSeq *circles = cvHoughCircles(hough_in, storage,
     // 	CV_HOUGH_GRADIENT, 4, size.height/10, 100, 40, 0, 0);
     cout<<(float)(clock() - t)/CLOCKS_PER_SEC<<"\n";
