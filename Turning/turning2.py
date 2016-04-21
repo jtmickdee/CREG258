@@ -2,11 +2,16 @@
 import RPi.GPIO as GPIO
 import time
 
-pin = 21
+camServoPin = 21
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(pin, GPIO.OUT)
-pwm = GPIO.PWM(pin, 100)
-pwm.start(5)
+GPIO.setup(camServoPin, GPIO.OUT)
+pwmCamServo = GPIO.PWM(camServoPin, 100)
+pwmCamServo.start(5)
+
+carServoPin = 22
+GPIO.setup(carServoPin, GPIO.OUT)
+pwmCarServo = GPIO.PWM(carServoPin, 100)
+pwmCarServo.start
 
 #uses center of frame from image processing
 centerOfFrame = 320
@@ -14,18 +19,28 @@ centerOfFrame = 320
 frameError = 10
 
 #updates angle of servo on camera
-def update(angle):
+def updateCamServo(angle):
 	if angle > 180:
 		angle = 180
 	if angle < 0:
 		angle = 0
         duty = float(angle) / 10.0 + 2.5
-        pwm.ChangeDutyCycle(duty)
+        pwmCamServo.ChangeDutyCycle(duty)
 
-#adjusts car position based on angle of servo 
+def updateCarServo(angle):
+	if angle > 180:
+		angle = 180
+	if angle < 0:
+		angle = 0
+        duty = float(angle) / 10.0 + 2.5
+        pwmCarServo.ChangeDutyCycle(duty)
+
+#adjusts car position based on angle of servo
 #if image is within range
 def adjustCarPos(angle):
-	print 'adjusting'	
+	print 'adjusting'
+	updateCarServo(angle)
+	
 #uses image processing with angle update
 #takes too long to on  raspberrry pi
 def checkPhoto(xDim, angle):
@@ -39,29 +54,29 @@ def checkPhoto(xDim, angle):
 		#Call driving software
 		adjustCarPos(angle)
 
-	update(angle)
-	
+	updateCamServo(angle)
+
 def adjustCamera(photoCoord, servoAngle):
 	#needs to be updated and should be 1 degree of cchange is x pixels
 	#x pixels is the xervoAdjustFactor
 	servoAdjustFactor = 10
 	#xCenterCoord = 425
 	midX = centerOfFrame
-	
+
 	diffCoord = midX - photoCoord[0]
 	if diffCoord > 0:
-		update(servoAngle + abs(diffCoord) % servoAdjustFactor)
+		updateCamServo(servoAngle + abs(diffCoord) % servoAdjustFactor)
 	elif diffCoord < 0:
-		update(servoAngle - abs(diffCoord) % servoAdjustFactor)
+		updateCamServo(servoAngle - abs(diffCoord) % servoAdjustFactor)
 
 #while 1:
 #	angle = raw_input('Enter angle')
 #	update(angle)
-update(45)
+updateCamServo(45)
 time.sleep(2)
-update(90)
+updateCamServo(90)
 time.sleep(2)
-update(135)
+updateCamServo(135)
 time.sleep(2)
 #update(180)
 #time.sleep(2)
