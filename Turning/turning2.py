@@ -27,6 +27,7 @@ def update(angle):
 def adjustCarPos(angle):
 	print 'adjusting'	
 #uses image processing with angle update
+#takes too long to on  raspberrry pi
 def checkPhoto(xDim, angle):
 	#how much to adjust the angle of the servo
 	adjustFactor = angle/2
@@ -39,6 +40,19 @@ def checkPhoto(xDim, angle):
 		adjustCarPos(angle)
 
 	update(angle)
+	
+def adjustCamera(photoCoord, servoAngle):
+	#needs to be updated and should be 1 degree of cchange is x pixels
+	#x pixels is the xervoAdjustFactor
+	servoAdjustFactor = 10
+	#xCenterCoord = 425
+	midX = centerOfFrame
+	
+	diffCoord = midX - photoCoord[0]
+	if diffCoord > 0:
+		update(servoAngle + abs(diffCoord) % servoAdjustFactor)
+	elif diffCoord < 0:
+		update(servoAngle - abs(diffCoord) % servoAdjustFactor)
 
 #while 1:
 #	angle = raw_input('Enter angle')
