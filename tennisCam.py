@@ -36,7 +36,8 @@ blur = cv2.medianBlur(dil, 31)
 #dil.release()
 
 #circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 2, blur.shape[0]/4, 200, 100)
-circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 2, blur.shape[0]/4, param1=100, param2=100, minRadius=0, maxRadius=0)
+#circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 2, blur.shape[0]/4, param1=100, param2=100, minRadius=0, maxRadius=0)
+circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 1, 30, 100, 17, 0 , 1000);
 #blur.release()
 
 print circles
