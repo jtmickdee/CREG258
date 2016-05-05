@@ -37,17 +37,17 @@ def changeCamAngle(num):
 	if num == 1:
 		GPIO.output(camServoPin1, GPIO.HIGH)
 		GPIO.output(camServoPin2, GPIO.LOW)
-		print 'Setting 1 to high and 2 to low'
+		print 'Camera setting 1 to high and 2 to low'
 #turns to 170
 	elif num == 2:
 		GPIO.output(camServoPin1, GPIO.LOW)
 		GPIO.output(camServoPin2, GPIO.HIGH)
-		print 'Setting 1 to low and 2 to high'
+		print 'Camera setting 1 to low and 2 to high'
 #turns to 10
 	elif num == 3:
 		GPIO.output(camServoPin1, GPIO.HIGH)
 		GPIO.output(camServoPin2, GPIO.HIGH)
-		print 'Setting 1 to high and 2 to high'
+		print 'Camera setting 1 to high and 2 to high'
 
 #changes car servo angle by sending high and low pin signals to arduino
 def changeCarAngle(num):
@@ -61,17 +61,17 @@ def changeCarAngle(num):
 	if num == 1:
 		GPIO.output(carServoPin1, GPIO.HIGH)
 		GPIO.output(carServoPin2, GPIO.LOW)
-		print 'Setting 1 to high and 2 to low'
+		print 'Car setting 1 to high and 2 to low'
 #turns to 110
 	elif num == 2:
 		GPIO.output(carServoPin1, GPIO.LOW)
 		GPIO.output(carServoPin2, GPIO.HIGH)
-		print 'Setting 1 to low and 2 to high'
+		print 'Car setting 1 to low and 2 to high'
 #turns to 90
 	elif num == 3:
 		GPIO.output(carServoPin1, GPIO.HIGH)
 		GPIO.output(carServoPin2, GPIO.HIGH)
-		print 'Setting 1 to high and 2 to high'
+		print 'Car setting 1 to high and 2 to high'
 num =1
 changeCarAngle(num)
 time.sleep(5)

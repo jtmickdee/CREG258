@@ -1,101 +1,179 @@
 #! /usr/bin/env python
 import RPi.GPIO as GPIO
+import numpy as np
+import cv2
+import picamera
+from picamera.array import PiRGBArray
 import time
 
-time.sleep(10)
-
-camServoPin = 23
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(camServoPin, GPIO.OUT)
-pwmCamServo = GPIO.PWM(camServoPin, 100)
-pwmCamServo.start(5)
 
-carServoPin = 12
-GPIO.setup(carServoPin, GPIO.OUT)
-pwmCarServo = GPIO.PWM(carServoPin, 100)
-pwmCarServo.start(5)
+dilSize = 3
+winX = 200
+imgHeight = 480
+imgWidth = 640
+imgMiddle = imgWidth/2
 
-#uses center of frame from image processing
-centerOfFrame = 320
-#allows a default error to have it within range to pass underneath the car
-frameError = 10
+camera = picamera.PiCamera()
+camera.resolution = (imgWidth, imgHeight)
 
-#updates angle of servo on camera
-def updateCamServo(angle):
-	if angle > 180:
-		angle = 180
-	if angle < 0:
-		angle = 0
-        duty = float(angle) / 10.0 + 2.5
-        pwmCamServo.ChangeDutyCycle(duty)
+#camera servo pins on raspberry pi
+camServoPin1 = 22
+camServoPin2 = 27
 
-def updateCarServo(angle):
-	if angle > 180:
-		angle = 180
-	if angle < 0:
-		angle = 0
-        duty = float(angle) / 10.0 + 2.5
-        pwmCarServo.ChangeDutyCycle(duty)
+#car servo pins on raspberry pi
+carServoPin1 = 24
+carServoPin2 = 23
 
-#adjusts car position based on angle of servo
-#if image is within range
-def adjustCarPos(angle):
-	print 'adjusting'
-	updateCarServo(angle)
+#setting pinns to output
+GPIO.setup(camServoPin1, GPIO.OUT)
+GPIO.setup(camServoPin2, GPIO.OUT)
 
-#uses image processing with angle update
-#takes too long to on  raspberrry pi
-def checkPhoto(xDim, angle):
-	#how much to adjust the angle of the servo
-	adjustFactor = angle/2
-	if xDim < centerOfFrame + frameError:
-		angle -= adjustFactor
-	elif xDim > centerOfFrame - frameError:
-		angle += adjustFactor
-	else:
-		#Call driving software
-		adjustCarPos(angle)
+GPIO.setup(carServoPin1, GPIO.OUT)
+GPIO.setup(carServoPin2, GPIO.OUT)
 
-	updateCamServo(angle)
+#setting pints to low
+GPIO.output(camServoPin1, GPIO.LOW)
+GPIO.output(camServoPin2, GPIO.LOW)
 
-def adjustCamera(photoCoord, servoAngle):
-	#needs to be updated and should be 1 degree of cchange is x pixels
-	#x pixels is the xervoAdjustFactor
-	servoAdjustFactor = 10
-	#xCenterCoord = 425
-	midX = centerOfFrame
+GPIO.output(carServoPin1, GPIO.LOW)
+GPIO.output(carServoPin2, GPIO.LOW)
 
-	diffCoord = midX - photoCoord[0]
-	if diffCoord > 0:
-		updateCamServo(servoAngle + abs(diffCoord) % servoAdjustFactor)
-	elif diffCoord < 0:
-		updateCamServo(servoAngle - abs(diffCoord) % servoAdjustFactor)
-
-#max of percentage for the motor max
 PWM_MAX = 100
+GPIO.setwarnings(False)
 
-#motor1 In1 on the h-bridge
+#contorls the pulse that is going into the h-bridge in IN2
 motorIn1 = 16
 GPIO.setup(motorIn1, GPIO.OUT)
 GPIO.output(motorIn1, False)
 
-#motor1 in2 on the h-bridge
+#contorls the pulse that is going into the h-bridge in IN1
 motorIn2 = 21
 GPIO.setup(motorIn2, GPIO.OUT)
 GPIO.output(motorIn2, False)
 
-#motor pwm controls percentage of time on
-motorPWM = 20
-GPIO.setup(motorPWM, GPIO.OUT)
-GPIO.output(motorPWM, True)
+#PWM signal that controls the cars motor and speed
+carMotorPWM = 20
+GPIO.setup(carMotorPWM, GPIO.OUT)
+GPIO.output(carMotorPWM, True)
 
-pwmCarMotor = GPIO.PWM(motorPWM, 1000)
+carFreq = 100
+carPWM = GPIO.PWM(carMotorPWM, carFreq)
 
-pwmCarMotor.start(100)
+carPWM.start(0)
+#changes camera servo angle by sending high and low pin signals to arduino
+def changeCamAngle(num):
+	num = int(num)
+#	if num == 0:
+#		GPIO.output(camServoPin1, GPIO.LOW)
+#		GPIO.output(camServoPin2, GPIO.LOW)
+#		print 'Setting both to low'
 
-#sets mode of motor so either forward backward Stopping
-#all chars forward is f, backword is r, stop is s
-def setMode(mode):
+#turns to 90
+	if num == 1:
+		GPIO.output(camServoPin1, GPIO.HIGH)
+		GPIO.output(camServoPin2, GPIO.LOW)
+		print 'Camera setting 1 to high and 2 to low'
+#turns to 170
+	elif num == 2:
+		GPIO.output(camServoPin1, GPIO.LOW)
+		GPIO.output(camServoPin2, GPIO.HIGH)
+		print 'Camera setting 1 to low and 2 to high'
+#turns to 10
+	elif num == 3:
+		GPIO.output(camServoPin1, GPIO.HIGH)
+		GPIO.output(camServoPin2, GPIO.HIGH)
+		print 'Camera setting 1 to high and 2 to high'
+
+def imgProc():
+	rawCap = PiRGBArray(camera)
+	time.sleep(0.1)
+	camera.capture(rawCap, format="bgr")
+	img = rawCap.array
+
+	hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+	mask = cv2.inRange(hsv,  np.array([0.11*256, 0.60*256, 0.20*256, 0]),
+		      np.array([0.14*256, 1.00*256, 1.00*256, 0]))
+
+	dilElm = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (dilSize * 2+1, dilSize * 2+1), (dilSize, dilSize))
+	dil = cv2.dilate(mask, dilElm, iterations = 1)
+
+	blur = cv2.medianBlur(dil, 31)
+
+	circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 1, 30, param1 = 100, param2 = 17, minRadius = 0 , maRadius = 1000);
+
+	return circles
+
+#looks at around for a tennis ball and returns arduino position and ball coordinates
+def scanCourt():
+	ball = []
+	angleNum = 1
+	while 1:
+		scanAttempts = 0
+		while ball is None:
+			changeCamAngle(angleNum)
+			ball = imgProc()
+			if scanAttempts == 1:
+				break
+			elif:
+				scanAttempts++
+		if ball is None:
+			angleNum++
+			if angleNum > 3:
+				break
+		elif:
+			break
+	return angleNum, ball
+
+#creates a Lidar Lite object to get distance and velocity
+class Lidar_Lite():
+  def __init__(self):
+    self.address = 0x62
+    self.distWriteReg = 0x00
+    self.distWriteVal = 0x04
+    self.distReadReg1 = 0x8f
+    self.distReadReg2 = 0x10
+    self.velWriteReg = 0x04
+    self.velWriteVal = 0x08
+    self.velReadReg = 0x09
+
+  def connect(self, bus):
+    try:
+      self.bus = smbus.SMBus(bus)
+      time.sleep(0.5)
+      return 0
+    except:
+      return -1
+
+  def writeAndWait(self, register, value):
+    self.bus.write_byte_data(self.address, register, value);
+    time.sleep(0.02)
+
+  def readAndWait(self, register):
+    res = self.bus.read_byte_data(self.address, register)
+    time.sleep(0.02)
+    return res
+
+  def getDistance(self):
+    self.writeAndWait(self.distWriteReg, self.distWriteVal)
+    dist1 = self.readAndWait(self.distReadReg1)
+    dist2 = self.readAndWait(self.distReadReg2)
+    return (dist1 << 8) + dist2
+
+  def getVelocity(self):
+    self.writeAndWait(self.distWriteReg, self.distWriteVal)
+    self.writeAndWait(self.velWriteReg, self.velWriteVal)
+    vel = self.readAndWait(self.velReadReg)
+    return self.signedInt(vel)
+
+  def signedInt(self, value):
+    if value > 127:
+      return (256-value) * (-1)
+    else:
+      return value
+
+#tells car to go forward or back
+def setCarMode(mode):
 	if mode == 'f':
 		GPIO.output(motorIn1, True)
 		GPIO.output(motorIn2, False)
@@ -105,38 +183,30 @@ def setMode(mode):
 		GPIO.output(motorIn2, True)
 		print 'Going backwards'
 	else:
-		pwmCarMotor.ChangeDutyCycle(0)
+		carPWM.ChangeDutyCycle(0)
 		GPIO.output(motorIn1, False)
 		GPIO.output(motorIn2, False)
 		print 'Stopping'
 
-#controls power being applied to motor
-def setPower(power):
+#controls cars power
+def setCarPower(power):
 	if power < 0:
-		setMode('r')
+		setCarMode('r')
 		pwm2 = -int(PWM_MAX * power)
 		if pwm2 > PWM_MAX:
 			pwm2 = PWM_MAX
 	elif power > 0:
-		setMode('f')
+		setCarMode('f')
 		pwm2 = int(PWM_MAX * power)
 		if pwm2 > PWM_MAX:
 			pwm2 = PWM_MAX
 	else:
-		setMode('s')
+		setCarMode('s')
 		pwm2 = 0
 		print 'Powering down'
-	pwmCarMotor.ChangeDutyCycle(pwm2)
+	carPWM.changeDutyCycle(pwm2)
 
-#stops motor and cleanups connections
-def exit():
+#stops cars and powers down
+def exitCar():
 	GPIO.output(motorIn1, False)
 	GPIO.output(motorIn2, False)
-	GPIO.cleanup()
-#while 1:
-#	angle = raw_input('Enter angle')
-#	update(angle)
-pwmCarServo.ChangeDutyCycle(110)
-setMode('r')
-time.sleep(7)
-GPIO.cleanup()

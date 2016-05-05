@@ -1,76 +1,75 @@
 #!/usr/bin/env python
-import RPi.GPIO as gp
+import RPi.GPIO as GPIO
 import time
 
-gp.setmode(gp.BCM)
+GPIO.setmode(GPIO.BCM)
 PWM_MAX = 100
-gp.setwarnings(False)
+GPIO.setwarnings(False)
 
 motorIn1 = 16
-gp.setup(motorIn1, gp.OUT)
-#gp.output(motorIn1, False)
+GPIO.setup(motorIn1, GPIO.OUT)
+#GPIO.output(motorIn1, False)
 
 
 motorIn2 = 21
-gp.setup(motorIn2, gp.OUT)
-gp.output(motorIn2, False)
+GPIO.setup(motorIn2, GPIO.OUT)
+GPIO.output(motorIn2, False)
 
 
 motorPWM = 20
-gp.setup(motorPWM, gp.OUT)
-gp.output(motorPWM, True)
+GPIO.setup(motorPWM, GPIO.OUT)
+GPIO.output(motorPWM, True)
 
-frequency = 100
-pwm = gp.PWM(motorPWM, frequency)
+carFreq = 100
+carPWM = GPIO.PWM(motorPWM, carFreq)
 
-pwm.start(100)
+carPWM.start(0)
 
-def setMode(mode):
+def setCarMode(mode):
 	if mode == 'f':
-		gp.output(motorIn1, True)
-		gp.output(motorIn2, False)
+		GPIO.output(motorIn1, True)
+		GPIO.output(motorIn2, False)
 		print 'Going forwards'
 	elif mode == 'r':
-		gp.output(motorIn1, False)
-		gp.output(motorIn2, True)
+		GPIO.output(motorIn1, False)
+		GPIO.output(motorIn2, True)
 		print 'Going backwards'
 	else:
-		pwm.ChangeDutyCycle(0)
-		gp.output(motorIn1, False)
-		gp.output(motorIn2, False)
+		carPWM.ChangeDutyCycle(0)
+		GPIO.output(motorIn1, False)
+		GPIO.output(motorIn2, False)
 		print 'Stopping'
-def setPower(power):
+
+def setCarPower(power):
 	if power < 0:
-		setMode('r')
+		setCarMode('r')
 		pwm2 = -int(PWM_MAX * power)
 		if pwm2 > PWM_MAX:
 			pwm2 = PWM_MAX
 	elif power > 0:
-		setMode('f')
+		setCarMode('f')
 		pwm2 = int(PWM_MAX * power)
 		if pwm2 > PWM_MAX:
 			pwm2 = PWM_MAX
 	else:
-		setMode('s')
+		setCarMode('s')
 		pwm2 = 0
 		print 'Powering down'
-def exit():
-	gp.output(motorIn1, False)
-	gp.output(motorIn2, False)
-	gp.cleanup()
+	carPWM.changeDutyCycle(pwm2)
+
+def exitCar():
+	GPIO.output(motorIn1, False)
+	GPIO.output(motorIn2, False)
+	GPIO.cleanup()
 #pow = input('Enter power level')
-pow =1 
+pow =1
 print('Power level is ', pow)
-#setPower(pow)
+#setCarPower(pow)
 time.sleep(2)
-#pwm.ChangeDutyCycle(50)
+#carPWM.ChangeDutyCycle(50)
 while 1:
 	dir = raw_input('Enter direction f/r/s ')
-	setMode(dir[0])
+	setCarMode(dir[0])
 	if(dir[0] == 's'):
 		break
-exit()
-
-
-
-
+exitCar()
