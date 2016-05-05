@@ -84,7 +84,7 @@ def changeCamAngle(num):
 		GPIO.output(camServoPin1, GPIO.HIGH)
 		GPIO.output(camServoPin2, GPIO.HIGH)
 		print 'Camera setting 1 to high and 2 to high'
-	time.sleep(6)
+#	time.sleep(6)
 
 def imgProc():
 	rawCap = PiRGBArray(camera)
@@ -234,7 +234,7 @@ def setCarPower(power):
 def exitCar():
 	GPIO.output(motorIn1, False)
 	GPIO.output(motorIn2, False)
-#scanCourt()
+scanCourt()
 time.sleep(3)
 changeWheelsAngle(1)
 time.sleep(3)
