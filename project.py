@@ -84,6 +84,7 @@ def changeCamAngle(num):
 		GPIO.output(camServoPin1, GPIO.HIGH)
 		GPIO.output(camServoPin2, GPIO.HIGH)
 		print 'Camera setting 1 to high and 2 to high'
+	time.sleep(6)
 
 def imgProc():
 	rawCap = PiRGBArray(camera)
@@ -100,14 +101,15 @@ def imgProc():
 
 	blur = cv2.medianBlur(dil, 31)
 
-	circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 1, 30, param1 = 100, param2 = 17, minRadius = 0 , maRadius = 1000);
-
+	circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 1, 30, param1 = 100, param2 = 17, minRadius = 0 , maxRadius = 1000);
+	print circles
 	return circles
 
 #looks at around for a tennis ball and returns arduino position and ball coordinates
 def scanCourt():
-	ball = []
 	angleNum = 1
+	ball = None
+	print ball
 	while 1:
 		scanAttempts = 0
 		while ball is None:
@@ -115,16 +117,38 @@ def scanCourt():
 			ball = imgProc()
 			if scanAttempts == 1:
 				break
-			elif:
-				scanAttempts++
+			else:
+				scanAttempts+=1
 		if ball is None:
-			angleNum++
+			angleNum+=1
 			if angleNum > 3:
 				break
-		elif:
+		else:
 			break
+	if ball is None:
+		changeCamAngle(1)
 	return angleNum, ball
 
+#adjusts the wheels
+def changeWheelsAngle(num):
+#turns to 100
+	if num == 1:
+		GPIO.output(carServoPin1, GPIO.HIGH)
+		GPIO.output(carServoPin2, GPIO.LOW)
+		print 'Wheels setting 1 to high and 2 to low'
+#turns to 110
+	elif num == 2:
+		GPIO.output(carServoPin1, GPIO.LOW)
+		GPIO.output(carServoPin2, GPIO.HIGH)
+		print 'Wheels setting 1 to low and 2 to high'
+#turns to 90
+	elif num == 3:
+		GPIO.output(carServoPin1, GPIO.HIGH)
+		GPIO.output(carServoPin2, GPIO.HIGH)
+		print 'Wheels setting 1 to high and 2 to high'
+	time.sleep(6)
+	
+	
 #creates a Lidar Lite object to get distance and velocity
 class Lidar_Lite():
   def __init__(self):
@@ -210,3 +234,11 @@ def setCarPower(power):
 def exitCar():
 	GPIO.output(motorIn1, False)
 	GPIO.output(motorIn2, False)
+#scanCourt()
+time.sleep(3)
+changeWheelsAngle(1)
+time.sleep(3)
+changeWheelsAngle(2)
+time.sleep(3)
+changeWheelsAngle(3)
+time.sleep(3)
