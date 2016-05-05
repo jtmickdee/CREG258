@@ -1,19 +1,18 @@
-#! /usr/bin/env python
 import RPi.GPIO as GPIO
 import time
 import picamera
 
 
-camera = picamera.PiCamera()
-camera.resolution = (640, 480)
+#camera = picamera.PiCamera()
+#camera.resolution = (640, 480)
 
-camServoPin = 21
+camServoPin = 19
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(camServoPin, GPIO.OUT)
-pwmCamServo = GPIO.PWM(camServoPin, 100)
+pwmCamServo = GPIO.PWM(camServoPin, 25)
 pwmCamServo.start(5)
 
-carServoPin = 22
+carServoPin = 12
 GPIO.setup(carServoPin, GPIO.OUT)
 pwmCarServo = GPIO.PWM(carServoPin, 100)
 #pwmCarServo.start(5)
@@ -31,7 +30,6 @@ def updateCamServo(angle):
 	if angle < 0:
 		angle = 0
         duty = float(angle) / 10.0 + 2.5
-	time.sleep(1)
         pwmCamServo.ChangeDutyCycle(duty)
 
 def updateCarServo(angle):
@@ -41,6 +39,7 @@ def updateCarServo(angle):
 		angle = 0
         duty = float(angle) / 10.0 + 2.5
         pwmCarServo.ChangeDutyCycle(duty)
+	time.sleep(5)
 
 #adjusts car position based on angle of servo
 #if image is within range
@@ -79,26 +78,20 @@ def adjustCamera(photoCoord, servoAngle):
 def takePhoto(filename):
 #	camera = picamera.PiCamera()
 #	camera.resolution = (640, 480)
-	camera.capture(str(filename)+'.jpg')
+#	camera.capture(str(filename)+'.jpg')
 	print('taking picture saved at ' + str(filename))
 	time.sleep(2)
 	#camera.close()
 #while 1:
 #	angle = raw_input('Enter angle')
-#	update(angle)
-updateCamServo(0)
-time.sleep(2)
-updateCamServo(180)
-time.sleep(2)
+#	updateCamServo(angle)
+updateCamServo(90)
+time.sleep(5)
 updateCamServo(45)
-time.sleep(2)
-takePhoto('test1')
-time.sleep(2)
-updateCamServo(50)
-time.sleep(2)
-takePhoto('test2')
-time.sleep(2)
-updateCamServo(0)
-time.sleep(2)
-camera.close()
-GPIO.cleanup()
+time.sleep(5)
+updateCamServo(135)
+time.sleep(5)
+while 1:
+	updateCamServo(10)
+#camera.close()
+#GPIO.cleanup()

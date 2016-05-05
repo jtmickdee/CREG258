@@ -62,9 +62,8 @@ def exit():
 pow =1 
 print('Power level is ', pow)
 #setPower(pow)
-setMode('r')
 time.sleep(2)
-pwm.ChangeDutyCycle(50)
+#pwm.ChangeDutyCycle(50)
 while 1:
 	dir = raw_input('Enter direction f/r/s ')
 	setMode(dir[0])

@@ -19,7 +19,7 @@ const char * maskPic ="mask";
 const char * dilPic ="dilation";
 const char * blurPic = "blurred";
 
-int dilSize = 21;
+int dilSize = 3;
 int winX = 200;
 int imgHeight = 480;
 int imgWidth = 640;
@@ -49,25 +49,27 @@ int main(int argc, char **argv)
   //sleep(3);
 
   cout<<"Setup Named Windows\n";
-	/* Create a window to use for displaying the images */
-	namedWindow(normPic, 0);
-	moveWindow(normPic, 1*(winX + 25), 200);
+//	/* Create a window to use for displaying the images */
+
+//	namedWindow(normPic, 0);
+//	moveWindow(normPic, 1*(winX + 25), 200);
 
 	// /* Create a window to use for displaying the images */
-	// namedWindow(maskPic, 0);
-	// moveWindow(maskPic, 2*(winX + 25), 200);
+//	 namedWindow(maskPic, 0);
+//	 moveWindow(maskPic, 2*(winX + 25), 200);
   //
 	// /* Create a window to use for displaying the images */
-	// namedWindow(hsvPic, 0);
-	// moveWindow(hsvPic, 1*(winX + 25), 200);
+//	 namedWindow(hsvPic, 0);
+//	 moveWindow(hsvPic, 1*(winX + 25), 200);
   //
 	// /* Create a window to use for displaying the images */
-	// namedWindow(dilPic, 0);
-	// moveWindow(dilPic,  3*(winX + 25), 200);
+//	 namedWindow(dilPic, 0);
+//	 moveWindow(dilPic,  3*(winX + 25), 200);
   //
   // /* Create a window to use for displaying the images */
-	// namedWindow(blurPic, 0);
-	// moveWindow(blurPic,  4*(winX + 25), 200);
+//	 namedWindow(blurPic, 0);
+//	 moveWindow(blurPic,  4*(winX + 25), 200);
+
 
   cout<<"Beginning Loop\n";
   while (1) {
@@ -85,55 +87,58 @@ int main(int argc, char **argv)
     inRange(hsv,  Scalar(0.11*256, 0.60*256, 0.20*256, 0),
 	                 Scalar(0.14*256, 1.00*256, 1.00*256, 0), mask);
 //free mem
-    hsv.release();
+    //hsv.release();
 
     //dilates the hsv picture to better see the color
-    Mat dilElem = getStructuringElement(MORPH_ELLIPSE, Size(2*dilSize +1, 2*dilSize+1), Point(dilSize, dilSize));
+    Mat dilElem = getStructuringElement(MORPH_RECT, Size(2*dilSize +1, 2*dilSize+1), Point(dilSize, dilSize));
     dilate(mask, dil, dilElem);
 
     //blurs it so then it will be easier to detect as a circle
     medianBlur(dil, blur,  31);
 //free mem
-   dil.release();
+   //dil.release();
 
     //finds circles in pictures
 
     vector<Vec3f> circles;
+    //HoughCircles(blur, circles, CV_HOUGH_GRADIENT,
+                 //2, blur.rows/4, 200, 100 );
     HoughCircles(blur, circles, CV_HOUGH_GRADIENT,
-                 2, blur.rows/4, 200, 100 );
+                 1, 30, 100, 17 ,0, 1000);
 //free mem
-    blur.release();
+    //blur.release();
 
-/*
+cout<<circles.size()<<endl;
                  for( size_t i = 0; i < circles.size(); i++ )
              {
                   Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
                   int radius = cvRound(circles[i][2]);
                   // draw the circle center
                   circle( img, center, 3, Scalar(0,255,0), -1, 8, 0 );
-		  cout<<center<<endl;
+		  cout<<center.x<<center.y<<endl;
                   // draw the circle outline
                   circle( img, center, radius, Scalar(0,0,255), 3, 8, 0 );
              }
-*/
-   Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-   int radius = cvRound(circles[i][2]);
+
+/*   Point center(cvRound(circles[0][0]), cvRound(circles[0][1]));
+   int radius = cvRound(circles[0][2]);
    // draw the circle center
    circle( img, center, 3, Scalar(0,255,0), -1, 8, 0 );
    cout<<center<<endl;
    // draw the circle outline
    circle( img, center, radius, Scalar(0,0,255), 3, 8, 0 );
-
+*/
     // CvSeq *circles = cvHoughCircles(hough_in, storage,
     // 	CV_HOUGH_GRADIENT, 4, size.height/10, 100, 40, 0, 0);
     cout<<(float)(clock() - t)/CLOCKS_PER_SEC<<"\n";
     cout<<"Showing Image\n";
     //shows the images in the appropriate windows
-    imshow(normPic, img);
-    // imshow(hsvPic, hsv);
-    // imshow(maskPic, mask);
-    // imshow(dilPic, dil);
-    // imshow(blurPic, blur);
+ /*   imshow(normPic, img);
+    imshow(hsvPic, hsv);
+    imshow(maskPic, mask);
+    imshow(dilPic, dil);
+    imshow(blurPic, blur);
+*/
 
     //sleep(3);
     waitKey(0);

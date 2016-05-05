@@ -2,16 +2,18 @@
 import RPi.GPIO as GPIO
 import time
 
-camServoPin = 21
+time.sleep(10)
+
+camServoPin = 23
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(camServoPin, GPIO.OUT)
 pwmCamServo = GPIO.PWM(camServoPin, 100)
 pwmCamServo.start(5)
 
-carServoPin = 22
+carServoPin = 12
 GPIO.setup(carServoPin, GPIO.OUT)
 pwmCarServo = GPIO.PWM(carServoPin, 100)
-pwmCarServo.start
+pwmCarServo.start(5)
 
 #uses center of frame from image processing
 centerOfFrame = 320
@@ -74,20 +76,20 @@ PWM_MAX = 100
 
 #motor1 In1 on the h-bridge
 motorIn1 = 16
-gp.setup(motorIn1, gp.OUT)
-gp.output(motorIn1, False)
+GPIO.setup(motorIn1, GPIO.OUT)
+GPIO.output(motorIn1, False)
 
 #motor1 in2 on the h-bridge
 motorIn2 = 21
-gp.setup(motorIn2, gp.OUT)
-gp.output(motorIn2, False)
+GPIO.setup(motorIn2, GPIO.OUT)
+GPIO.output(motorIn2, False)
 
 #motor pwm controls percentage of time on
 motorPWM = 20
-gp.setup(motorPWM, gp.OUT)
-gp.output(motorPWM, True)
+GPIO.setup(motorPWM, GPIO.OUT)
+GPIO.output(motorPWM, True)
 
-pwmCarMotor = gp.PWM(motorPWM, 1000)
+pwmCarMotor = GPIO.PWM(motorPWM, 1000)
 
 pwmCarMotor.start(100)
 
@@ -95,17 +97,17 @@ pwmCarMotor.start(100)
 #all chars forward is f, backword is r, stop is s
 def setMode(mode):
 	if mode == 'f':
-		gp.output(motorIn1, True)
-		gp.output(motorIn2, False)
+		GPIO.output(motorIn1, True)
+		GPIO.output(motorIn2, False)
 		print 'Going forwards'
 	elif mode == 'r':
-		gp.output(motorIn1, False)
-		gp.output(motorIn2, True)
+		GPIO.output(motorIn1, False)
+		GPIO.output(motorIn2, True)
 		print 'Going backwards'
 	else:
 		pwmCarMotor.ChangeDutyCycle(0)
-		gp.output(motorIn1, False)
-		gp.output(motorIn2, False)
+		GPIO.output(motorIn1, False)
+		GPIO.output(motorIn2, False)
 		print 'Stopping'
 
 #controls power being applied to motor
@@ -128,18 +130,13 @@ def setPower(power):
 
 #stops motor and cleanups connections
 def exit():
-	gp.output(motorIn1, False)
-	gp.output(motorIn2, False)
-	gp.cleanup()
+	GPIO.output(motorIn1, False)
+	GPIO.output(motorIn2, False)
+	GPIO.cleanup()
 #while 1:
 #	angle = raw_input('Enter angle')
 #	update(angle)
-updateCamServo(45)
-time.sleep(2)
-updateCamServo(90)
-time.sleep(2)
-updateCamServo(135)
-time.sleep(2)
-#update(180)
-#time.sleep(2)
+pwmCarServo.ChangeDutyCycle(110)
+setMode('r')
+time.sleep(7)
 GPIO.cleanup()
