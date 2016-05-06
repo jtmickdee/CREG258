@@ -273,6 +273,20 @@ def turnCar(angle):
 		time.sleep(.5)
 	changeWheelsAngle(3)
 	
+#detects if there is objects in the way while going forward
+def waitDetection(seconds):
+	start = time.time()
+	time.clock()
+	elapsed = 0
+	dist = lidar.getDistance()
+	while elapsed < seconds:
+		if dist < lidarDist -lidarTol:
+			setCarMode('s')
+			break
+		elapsed = time.time()-start
+		time.sleep(1)
+		dist = lidar.getDistance()
+
 def checkDistance():
 	print 'checking distance'
 	connected = lidar.connect(1) 
@@ -297,5 +311,5 @@ while 1:
 		checkDistance()
 	else:
 		changeWheelsAngle(3)
-		time.sleep(5)
+		waitDetection(5)
 		
