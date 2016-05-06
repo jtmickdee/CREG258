@@ -5,6 +5,8 @@ import cv2
 import picamera
 from picamera.array import PiRGBArray
 import time
+import serial
+import math
 
 GPIO.setmode(GPIO.BCM)
 
@@ -84,7 +86,7 @@ def changeCamAngle(num):
 		GPIO.output(camServoPin1, GPIO.HIGH)
 		GPIO.output(camServoPin2, GPIO.HIGH)
 		print 'Camera setting 1 to high and 2 to high'
-#	time.sleep(6)
+	time.sleep(6)
 
 def imgProc():
 	rawCap = PiRGBArray(camera)
@@ -234,11 +236,49 @@ def setCarPower(power):
 def exitCar():
 	GPIO.output(motorIn1, False)
 	GPIO.output(motorIn2, False)
-scanCourt()
-time.sleep(3)
-changeWheelsAngle(1)
-time.sleep(3)
+
+#adds location of ball degree change to the initial angle
+def angleConvert(angle):
+	num = 0
+	if angle < 100:
+		num = -1
+	elif angle > 100:
+		num = 1
+	return num
+
+#turns car to angle specified
+def turnCar(angle):
+	print 'turning car'
+	ser = serial.Serial('/dev/ttyACM0', 9600)
+	ser.readline()
+	print ser.readline()
+	print ser.readline()
+	initAngle = float(ser.readline())
+	destAngle = angleConvert(angle)*angle + initAngle 
+	if destAngle > 360:
+		destAngle = destAngle - 360
+	currAngle = initAngle
+	diffAngle = math.fabs(destAngle - currAngle)
+	setCarMode('r')
+	while diffAngle > 10:
+		currAngle = float(ser.readline())
+		print currAngle
+		diffAngle = math.fabs(destAngle - currAngle)
+		time.sleep(.5)
+	changeWheelsAngle(3)
+	
+def checkDistance():
+	print 'checking distance'
+	lidar = Lidar_Lite()
+	connected = lidar.connect(1)
+	while connected < -1:
+		setCarMode('s')
+		connected = lidar.connect(1)
+		time.sleep(2)	
+	setCarMode('r')	
+	while lidar.getDistance() >50:
+		time.sleep(.5)
+	setCarMode('s')
+	
 changeWheelsAngle(2)
-time.sleep(3)
-changeWheelsAngle(3)
-time.sleep(3)
+turnCar(45)	
