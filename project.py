@@ -254,9 +254,11 @@ def turnCar(angle):
 		angle = 10
 	print 'turning car'
 	ser = serial.Serial('/dev/ttyACM0', 9600)
+	ser.readline()
+	print ser.readline()
+	print ser.readline()
+	print ser.readline()
 	numCheck = ser.readline()
-	while isfloat(numCheck):
-		numCheck=ser.readline()
 	initAngle = float(numCheck)
 	destAngle = angleConvert(angle)*angle + initAngle 
 	if destAngle > 360:
@@ -265,8 +267,6 @@ def turnCar(angle):
 	diffAngle = math.fabs(destAngle - currAngle)
 	setCarMode('r')
 	while diffAngle > 10:
-		while isfloat(numCheck):
-			numCheck=ser.readline()
 		currAngle = float(numCheck)
 		print currAngle
 		diffAngle = math.fabs(destAngle - currAngle)
@@ -301,7 +301,8 @@ def checkDistance():
 	while lidar.getDistance() > lidarDist - lidarTol:
 		time.sleep(.5)
 	setCarMode('s')
-	
+
+time.sleep(.5)	
 while 1:
 	setCarMode('s')	
 	angle, ball = scanCourt()
@@ -315,5 +316,3 @@ while 1:
 	else:
 		changeWheelsAngle(3)
 		waitDetection(5)
-		
-

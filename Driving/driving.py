@@ -8,7 +8,7 @@ GPIO.setwarnings(False)
 
 motorIn1 = 16
 GPIO.setup(motorIn1, GPIO.OUT)
-#GPIO.output(motorIn1, False)
+GPIO.output(motorIn1, False)
 
 
 motorIn2 = 21
@@ -23,7 +23,7 @@ GPIO.output(motorPWM, True)
 carFreq = 100
 carPWM = GPIO.PWM(motorPWM, carFreq)
 
-carPWM.start(0)
+carPWM.start(100)
 
 def setCarMode(mode):
 	if mode == 'f':
