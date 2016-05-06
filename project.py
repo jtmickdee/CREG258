@@ -145,7 +145,7 @@ def scanCourt():
 		while ball is None:
 			changeCamAngle(angleNum)
 			ball = imgProc()
-			if scanAttempts == 1:
+			if scanAttempts == 3:
 				break
 			else:
 				scanAttempts+=1
@@ -192,10 +192,12 @@ def grabOff():
 #tells car to go forward or back
 def setCarMode(mode):
 	if mode == 'f':
+		carPWM.ChangeDutyCycle(100)
 		GPIO.output(motorIn1, True)
 		GPIO.output(motorIn2, False)
 		print 'Going forwards'
 	elif mode == 'r':
+		carPWM.ChangeDutyCycle(100)
 		GPIO.output(motorIn1, False)
 		GPIO.output(motorIn2, True)
 		print 'Going backwards'
@@ -255,9 +257,6 @@ def turnCar(angle):
 	print 'turning car'
 	ser = serial.Serial('/dev/ttyACM0', 9600)
 	ser.readline()
-	print ser.readline()
-	print ser.readline()
-	print ser.readline()
 	numCheck = ser.readline()
 	initAngle = float(numCheck)
 	destAngle = angleConvert(angle)*angle + initAngle 
@@ -267,6 +266,7 @@ def turnCar(angle):
 	diffAngle = math.fabs(destAngle - currAngle)
 	setCarMode('r')
 	while diffAngle > 10:
+		numCheck = ser.readline()
 		currAngle = float(numCheck)
 		print currAngle
 		diffAngle = math.fabs(destAngle - currAngle)
