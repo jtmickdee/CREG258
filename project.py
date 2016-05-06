@@ -7,8 +7,11 @@ from picamera.array import PiRGBArray
 import time
 import serial
 import math
+from Lidar.lidarlite import Lidar_Lite
 
 GPIO.setmode(GPIO.BCM)
+lidarDist = 62
+lidarTol = 10
 
 dilSize = 3
 winX = 200
@@ -16,6 +19,10 @@ imgHeight = 480
 imgWidth = 640
 imgMiddle = imgWidth/2
 
+#initialzies the lidar lite
+lidar = Lidar_Lite()
+
+#initializes the camera
 camera = picamera.PiCamera()
 camera.resolution = (imgWidth, imgHeight)
 
@@ -26,6 +33,27 @@ camServoPin2 = 27
 #car servo pins on raspberry pi
 carServoPin1 = 24
 carServoPin2 = 23
+
+#initializes the grabbing device direction pin on HBridge
+grabIn3 = 5
+GPIO.setup(grabIn3, GPIO.OUT)
+GPIO.output(grabIn3, False)
+
+#initialize the PWM pin on grab HBridge
+grabPWM = 6
+GPIO.setup(grabPWM, GPIO.OUT)
+GPIO.output(grabPWM, True)
+
+#initializes the grabIn4 pin on HBridge
+grabIn4 = 13
+GPIO.setup(grabIn4, GPIO.OUT)
+GPIO.output(grabIn4, False)
+
+grabFreq = 100
+grabPWM = GPIO.PWM(grabPWM, grabFreq)
+
+#starts grabing device PWM
+grabPWM.start(100)
 
 #setting pinns to output
 GPIO.setup(camServoPin1, GPIO.OUT)
@@ -62,7 +90,7 @@ GPIO.output(carMotorPWM, True)
 carFreq = 100
 carPWM = GPIO.PWM(carMotorPWM, carFreq)
 
-carPWM.start(0)
+carPWM.start(100)
 #changes camera servo angle by sending high and low pin signals to arduino
 def changeCamAngle(num):
 	num = int(num)
@@ -86,7 +114,7 @@ def changeCamAngle(num):
 		GPIO.output(camServoPin1, GPIO.HIGH)
 		GPIO.output(camServoPin2, GPIO.HIGH)
 		print 'Camera setting 1 to high and 2 to high'
-	time.sleep(6)
+	time.sleep(3)
 
 def imgProc():
 	rawCap = PiRGBArray(camera)
@@ -129,7 +157,6 @@ def scanCourt():
 			break
 	if ball is None:
 		changeCamAngle(1)
-	return angleNum, ball
 
 #adjusts the wheels
 def changeWheelsAngle(num):
@@ -148,55 +175,18 @@ def changeWheelsAngle(num):
 		GPIO.output(carServoPin1, GPIO.HIGH)
 		GPIO.output(carServoPin2, GPIO.HIGH)
 		print 'Wheels setting 1 to high and 2 to high'
-	time.sleep(6)
+	time.sleep(3)
 	
-	
-#creates a Lidar Lite object to get distance and velocity
-class Lidar_Lite():
-  def __init__(self):
-    self.address = 0x62
-    self.distWriteReg = 0x00
-    self.distWriteVal = 0x04
-    self.distReadReg1 = 0x8f
-    self.distReadReg2 = 0x10
-    self.velWriteReg = 0x04
-    self.velWriteVal = 0x08
-    self.velReadReg = 0x09
+#turns on grabbing device
+def grabOn():
+	GPIO.output(grabIn3, True)
+	GPIO.output(grabIn4, False)
+	print "grabbing device on"
 
-  def connect(self, bus):
-    try:
-      self.bus = smbus.SMBus(bus)
-      time.sleep(0.5)
-      return 0
-    except:
-      return -1
-
-  def writeAndWait(self, register, value):
-    self.bus.write_byte_data(self.address, register, value);
-    time.sleep(0.02)
-
-  def readAndWait(self, register):
-    res = self.bus.read_byte_data(self.address, register)
-    time.sleep(0.02)
-    return res
-
-  def getDistance(self):
-    self.writeAndWait(self.distWriteReg, self.distWriteVal)
-    dist1 = self.readAndWait(self.distReadReg1)
-    dist2 = self.readAndWait(self.distReadReg2)
-    return (dist1 << 8) + dist2
-
-  def getVelocity(self):
-    self.writeAndWait(self.distWriteReg, self.distWriteVal)
-    self.writeAndWait(self.velWriteReg, self.velWriteVal)
-    vel = self.readAndWait(self.velReadReg)
-    return self.signedInt(vel)
-
-  def signedInt(self, value):
-    if value > 127:
-      return (256-value) * (-1)
-    else:
-      return value
+#turns off grabbing device
+def grabOff():
+	GPIO.output(grabIn3, False)
+	GPIO.output(grabIn4, False)
 
 #tells car to go forward or back
 def setCarMode(mode):
@@ -269,16 +259,20 @@ def turnCar(angle):
 	
 def checkDistance():
 	print 'checking distance'
-	lidar = Lidar_Lite()
-	connected = lidar.connect(1)
+	connected = lidar.connect(1) 
 	while connected < -1:
 		setCarMode('s')
 		connected = lidar.connect(1)
 		time.sleep(2)	
 	setCarMode('r')	
-	while lidar.getDistance() >50:
+	while lidar.getDistance() > lidarDist - lidarTol:
 		time.sleep(.5)
 	setCarMode('s')
 	
+#angle, ball = scanCourt()
+angle = 45
+setCarMode('r')
+time.sleep(.5)
 changeWheelsAngle(2)
-turnCar(45)	
+turnCar(angle)	
+checkDistance()

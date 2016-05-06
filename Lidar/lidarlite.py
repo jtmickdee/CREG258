@@ -46,13 +46,13 @@ class Lidar_Lite():
       return (256-value) * (-1)
     else:
       return value
-lidar = Lidar_Lite()
-connected = lidar.connect(1)
+#lidar = Lidar_Lite()
+#connected = lidar.connect(1)
 
-if connected < -1:
-	print "Not connected"
+#if connected < -1:
+	#print "Not connected"
 
-while lidar.connect(1) >= -1:
-	print lidar.getDistance()
-	print lidar.getVelocity()
-	time.sleep(.5)
+#while lidar.connect(1) >= -1:
+	#print lidar.getDistance()
+	#print lidar.getVelocity()
+	#time.sleep(.5)
