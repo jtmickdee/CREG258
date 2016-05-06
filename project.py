@@ -157,6 +157,7 @@ def scanCourt():
 			break
 	if ball is None:
 		changeCamAngle(1)
+	return angleNum, ball
 
 #adjusts the wheels
 def changeWheelsAngle(num):
@@ -236,14 +237,27 @@ def angleConvert(angle):
 		num = 1
 	return num
 
+def isfloat(value):
+  try:
+    float(value)
+    return True
+  except ValueError:
+    return False
+
 #turns car to angle specified
 def turnCar(angle):
+	if angle == 1:
+		angle = 90
+	elif angle == 2:
+		angle = 170
+	elif angle ==3:
+		angle = 10
 	print 'turning car'
 	ser = serial.Serial('/dev/ttyACM0', 9600)
-	ser.readline()
-	print ser.readline()
-	print ser.readline()
-	initAngle = float(ser.readline())
+	numCheck = ser.readline()
+	while isfloat(numCheck):
+		numCheck=ser.readline()
+	initAngle = float(numCheck)
 	destAngle = angleConvert(angle)*angle + initAngle 
 	if destAngle > 360:
 		destAngle = destAngle - 360
@@ -251,7 +265,9 @@ def turnCar(angle):
 	diffAngle = math.fabs(destAngle - currAngle)
 	setCarMode('r')
 	while diffAngle > 10:
-		currAngle = float(ser.readline())
+		while isfloat(numCheck):
+			numCheck=ser.readline()
+		currAngle = float(numCheck)
 		print currAngle
 		diffAngle = math.fabs(destAngle - currAngle)
 		time.sleep(.5)
@@ -269,10 +285,17 @@ def checkDistance():
 		time.sleep(.5)
 	setCarMode('s')
 	
-#angle, ball = scanCourt()
-angle = 45
-setCarMode('r')
-time.sleep(.5)
-changeWheelsAngle(2)
-turnCar(angle)	
-checkDistance()
+while 1:
+	setCarMode('s')	
+	angle, ball = scanCourt()
+	#angle = 45
+	setCarMode('r')
+	time.sleep(.5)
+	if not ball is None:
+		changeWheelsAngle(angle)
+		turnCar(angle)	
+		checkDistance()
+	else:
+		changeWheelsAngle(3)
+		time.sleep(5)
+		
