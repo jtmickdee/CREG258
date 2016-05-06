@@ -278,6 +278,9 @@ def waitDetection(seconds):
 	start = time.time()
 	time.clock()
 	elapsed = 0
+	connected = -2
+	while connected < -1:
+		connected = lidar.connect(1)	
 	dist = lidar.getDistance()
 	while elapsed < seconds:
 		if dist < lidarDist -lidarTol:
@@ -313,3 +316,4 @@ while 1:
 		changeWheelsAngle(3)
 		waitDetection(5)
 		
+
