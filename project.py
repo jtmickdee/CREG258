@@ -300,7 +300,12 @@ def checkDistance():
 	setCarMode('r')	
 	while lidar.getDistance() > lidarDist - lidarTol:
 		time.sleep(.5)
+	#setCarMode('s')
+	grabOn()
+	time.sleep(10)
+	grabOff()
 	setCarMode('s')
+	time.sleep(1)
 
 time.sleep(.5)	
 while 1:
