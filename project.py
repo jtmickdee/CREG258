@@ -53,7 +53,7 @@ grabFreq = 100
 grabPWM = GPIO.PWM(grabPWM, grabFreq)
 
 #starts grabing device PWM
-grabPWM.start(100)
+grabPWM.start(40)
 
 #setting pinns to output
 GPIO.setup(camServoPin1, GPIO.OUT)
@@ -131,8 +131,10 @@ def imgProc():
 
 	blur = cv2.medianBlur(dil, 31)
 
-	circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 1, 30, param1 = 100, param2 = 17, minRadius = 0 , maxRadius = 1000);
+	circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 1, 30, param1 = 100, param2 = 12, minRadius = 0 , maxRadius = 1000);
 	print circles
+	#cv2.imshow('blah', blur)
+	#cv2.waitKey(0)
 	return circles
 
 #looks at around for a tennis ball and returns arduino position and ball coordinates
@@ -145,7 +147,7 @@ def scanCourt():
 		while ball is None:
 			changeCamAngle(angleNum)
 			ball = imgProc()
-			if scanAttempts == 3:
+			if scanAttempts == 2:
 				break
 			else:
 				scanAttempts+=1
@@ -180,8 +182,8 @@ def changeWheelsAngle(num):
 	
 #turns on grabbing device
 def grabOn():
-	GPIO.output(grabIn3, True)
-	GPIO.output(grabIn4, False)
+	GPIO.output(grabIn4, True)
+	GPIO.output(grabIn3, False)
 	print "grabbing device on"
 
 #turns off grabbing device
@@ -248,14 +250,23 @@ def isfloat(value):
 
 #turns car to angle specified
 def turnCar(angle):
+	changeCamAngle(1)
+	testAngle = 0
+	testDiffAngle = 0
 	if angle == 1:
 		angle = 90
+		testAngle = 0
 	elif angle == 2:
 		angle = 170
+		testAngle = 170 - 90
+		testDiffAngle = 30 
 	elif angle ==3:
 		angle = 10
+		testAngle = -(90 - angle)
+		testDiffAngle = -30 
 	print 'turning car'
 	ser = serial.Serial('/dev/ttyACM0', 9600)
+	ser.readline()
 	ser.readline()
 	numCheck = ser.readline()
 	initAngle = float(numCheck)
@@ -263,15 +274,24 @@ def turnCar(angle):
 	if destAngle > 360:
 		destAngle = destAngle - 360
 	currAngle = initAngle
+	testDiffAngle = testDiffAngle +initAngle
+	if testDiffAngle > 360:
+		testDiffAngle = testDiffAngle - 360
 	diffAngle = math.fabs(destAngle - currAngle)
 	setCarMode('r')
-	while diffAngle > 10:
+	while currAngle - 45 > 10:
+		#if imgProc() is not None:
+			#break
+		if currAngle <= testDiffAngle:
+			break
 		numCheck = ser.readline()
 		currAngle = float(numCheck)
 		print currAngle
-		diffAngle = math.fabs(destAngle - currAngle)
+		#diffAngle = math.fabs(destAngle - currAngle)
 		time.sleep(.5)
+	grabOn()
 	changeWheelsAngle(3)
+	time.sleep(1)
 	
 #detects if there is objects in the way while going forward
 def waitDetection(seconds):
@@ -298,21 +318,38 @@ def checkDistance():
 		connected = lidar.connect(1)
 		time.sleep(2)	
 	setCarMode('r')	
-	while lidar.getDistance() > lidarDist - lidarTol:
-		time.sleep(.5)
-	setCarMode('s')
+	#while lidar.getDistance() > lidarDist - lidarTol:
+	#print lidar.getDistance()
+	grabOn()	
+	time.sleep(15)
+	#setCarMode('s')
 
 time.sleep(.5)	
-while 1:
+def test():
+	while 1:
+		setCarMode('s')	
+		angle, ball = scanCourt()
+		#angle = 45
+		setCarMode('r')
+		time.sleep(.5)
+		if not ball is None:
+			changeWheelsAngle(angle)
+			turnCar(angle)	
+			checkDistance()
+		else:
+			changeWheelsAngle(3)
+			waitDetection(5)
+
+def testGrab():
 	setCarMode('s')	
-	angle, ball = scanCourt()
-	#angle = 45
+	while 1:
+		grabOn()
+		time.sleep(3)
+		grabOff()
+		time.sleep(1)
+def forward():
 	setCarMode('r')
-	time.sleep(.5)
-	if not ball is None:
-		changeWheelsAngle(angle)
-		turnCar(angle)	
-		checkDistance()
-	else:
-		changeWheelsAngle(3)
-		waitDetection(5)
+	time.sleep(12)
+	grabOn()
+	time.sleep(50)
+forward()
